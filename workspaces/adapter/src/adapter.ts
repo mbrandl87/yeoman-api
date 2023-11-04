@@ -1,6 +1,7 @@
 import process from 'node:process';
 import type inquirer from 'inquirer';
 import { createPromptModule, type PromptModule } from 'inquirer';
+import UI from 'inquirer/lib/ui/baseUI.js';
 import chalk from 'chalk';
 import type { PromptAnswers, Logger, PromptQuestions, InputOutputAdapter } from '@yeoman/types';
 import { createLogger } from './log.js';
@@ -12,6 +13,7 @@ export type TerminalAdapterOptions = {
   stderr?: NodeJS.WriteStream;
   console?: Console;
   log?: any;
+  useSystemPager?: boolean;
 };
 
 export class TerminalAdapter implements InputOutputAdapter {
@@ -22,6 +24,7 @@ export class TerminalAdapter implements InputOutputAdapter {
   log: Logger;
   promptModule: PromptModule;
   promptUi?: inquirer.ui.Prompt;
+useSystemPager?: boolean;
 
   /**
    * `TerminalAdapter` is the default implementation of `Adapter`, an abstraction
@@ -47,7 +50,8 @@ export class TerminalAdapter implements InputOutputAdapter {
         input: this.stdin,
         output: this.stdout,
       });
-
+      
+      this.useSystemPager = options?.useSystemPager;
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     this.log = options?.log ?? createLogger(this);
   }
@@ -91,7 +95,13 @@ export class TerminalAdapter implements InputOutputAdapter {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     this.promptUi = promptPromise.ui as any;
     const result = await promptPromise;
+    if (promptPromise.ui   instanceof UI) {
+		const ui = promptPromise.ui    as UI;
+		    // @ts-expect-error
+		ui.close();	
+	}
     delete this.promptUi;
     return result;
+
   }
 }

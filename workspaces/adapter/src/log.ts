@@ -7,7 +7,7 @@ import table from 'text-table';
 import chalk, { type ChalkInstance, type ForegroundColorName, type ModifierName } from 'chalk';
 import logSymbols from 'log-symbols';
 import type { ColoredMessage, DefaultLoggerCategories, Logger as LoggerApi } from '@yeoman/types';
-
+import {setUseSystemPager, showInSystemPager } from './pager.js';
 // Padding step
 const step = '  ';
 let padding = ' ';
@@ -53,6 +53,7 @@ export type LoggerOptions<Loggers = any, LoggerCategories extends string | numbe
   console?: Console;
   colors?: Record<LoggerCategories, ForegroundColorName | ModifierName>;
   loggers?: Loggers;
+  useSystemPager?: boolean;
 };
 
 export function createLogger<Loggers = any, LoggerCategories extends string | number | symbol = DefaultLoggerCategories>(
@@ -71,6 +72,10 @@ export function createLogger<Loggers = any, LoggerCategories extends string | nu
         )
       : {}),
   };
+  
+if (typeof parameters?.useSystemPager === 'boolean') {
+	setUseSystemPager(parameters.useSystemPager);
+}
 
   // `this.log` is a [logref](https://github.com/mikeal/logref)
   // compatible logger, with an enhanced API.
@@ -206,9 +211,21 @@ export function createLogger<Loggers = any, LoggerCategories extends string | nu
     return table(tableData);
   };
 
-  log.colored = function (coloredMessages: Array<ColoredMessage<LoggerCategories>>) {
-    this.write(coloredMessages.map(({ color, message }): string => (color ? colors[color](message) : message)).join(''));
-  };
+  log.colored = async function (coloredMessages: Array<ColoredMessage<LoggerCategories>>) {
+	  const content: string =coloredMessages.map(({ color, message }): string => (color ? colors[color](message) : message)).join('');
+	  let result =false;
+	  try {
+result =await 	showInSystemPager(content);
+		} catch (error ) {
+	result =false;
+}
+
+if (result === false) {
+		this.write(content);	
+		}
+
+
+	  };
 
   // eslint-disable-next-line @typescript-eslint/no-unsafe-return
   return log as any;

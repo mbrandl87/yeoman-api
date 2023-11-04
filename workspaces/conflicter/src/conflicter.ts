@@ -12,7 +12,6 @@ import type { MemFsEditorFile } from 'mem-fs-editor';
 import { clearFileState, setModifiedFileState } from 'mem-fs-editor/state';
 import { transform } from 'p-transform';
 import { binaryDiff, isBinary } from './binary-diff.js';
-
 export type ConflicterStatus = 'create' | 'skip' | 'identical' | 'force' | 'conflict' | 'ignore';
 
 export type ConflicterLog = ConflicterStatus | 'conflict';
@@ -163,7 +162,7 @@ export class Conflicter {
       .map((colored: ColoredMessage): ColoredMessage[] => colorLines(colored));
 
     if (file.fileModeChanges) {
-      destAdapter.log.colored([
+      await destAdapter.log.colored([
         { message: `\nold mode ${file.fileModeChanges[0]}`, color: 'removed' },
         { message: `\nnew mode ${file.fileModeChanges[1]}`, color: 'added' },
         { message: '\n' },
@@ -171,7 +170,7 @@ export class Conflicter {
     }
 
     if (messages) {
-      destAdapter.log.colored([
+await       destAdapter.log.colored([
         { message: '\n' },
         { message: 'removed', color: 'removed' },
         { message: '' },
@@ -417,7 +416,7 @@ export class Conflicter {
     }
 
     const result = await adapter.prompt<{ action: ConflicterAction | (({ file }: { file: ConflicterFile }) => ConflicterStatus) }>([
-      prompt,
+      prompt, 
     ]);
     if (typeof result.action === 'function') {
       return result.action.call(this, { file, relativeFilePath: file.relativePath, adapter });
